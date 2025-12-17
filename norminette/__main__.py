@@ -13,6 +13,7 @@ from norminette.file import File
 from norminette.lexer import Lexer
 from norminette.registry import Registry
 from norminette.tools.colors import colors
+from fixer import fix_file
 
 version_text = f"norminette {version('norminette')}"
 version_text += f", Python {platform.python_version()}"
@@ -67,6 +68,12 @@ def main():
         help="Parse only source files not match to .gitignore",
     )
     parser.add_argument(
+    	"-r" ,
+		"--repair",
+    	action="store_true",
+    	help="Fix your norm errors",
+    )
+    parser.add_argument(
         "-f",
         "--format",
         choices=list(formatter.name for formatter in formatters),
@@ -100,6 +107,8 @@ def main():
                 if path.suffix not in (".c", ".h"):
                     print(f"Error: {path.name!r} is not valid C or C header file")
                 else:
+                    if args.repair:
+            			fix_file(item)
                     file = File(item)
                     files.append(file)
             if path.is_dir():
