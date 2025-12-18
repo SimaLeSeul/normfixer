@@ -1,1 +1,1 @@
-from .fixer import fix_file
+# Rend le package importable
