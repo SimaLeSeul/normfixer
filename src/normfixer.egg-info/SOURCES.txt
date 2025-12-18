@@ -10,6 +10,7 @@ src/normfixer.egg-info/SOURCES.txt
 src/normfixer.egg-info/dependency_links.txt
 src/normfixer.egg-info/entry_points.txt
 src/normfixer.egg-info/top_level.txt
+src/normfixer/core/fixer.py
 src/normfixer/fixers/__init__.py
 src/normfixer/fixers/assignments.py
 src/normfixer/fixers/declaration_assign.py
@@ -19,5 +20,6 @@ src/normfixer/fixers/indentation.py
 src/normfixer/fixers/keywords.py
 src/normfixer/fixers/operators.py
 src/normfixer/fixers/parentheses.py
+src/normfixer/fixers/processor.py
 src/normfixer/fixers/utils.py
 src/normfixer/fixers/whitespace.py
