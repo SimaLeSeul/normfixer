@@ -1,78 +1,124 @@
 import os
-
-from .fixers.whitespace import fix_whitespace
-from .fixers.assignments import fix_assignments
-from .fixers.operators import fix_operators
-from .fixers.indentation import fix_indentation
-from .fixers.empty_lines import fix_empty_lines
-
-
-def apply_fixers(lines):
-    """Applique tous les fixers dans l'ordre optimal"""
-    # 1. Nettoyer whitespace AVANT tout
-    lines = fix_whitespace(lines)
-    
-    # 2. Séparer déclarations/assignations
-    lines = fix_assignments(lines)
-    
-    # 3. Fixer les opérateurs
-    lines = fix_operators(lines)
-    
-    # 4. Réindenter TOUT le code
-    lines = fix_indentation(lines)
-    
-    # 5. Nettoyer lignes vides EN DERNIER
-    lines = fix_empty_lines(lines)
-    
-    return lines
-
+from pathlib import Path
 
 def process_file(filepath, verbose=False, dry_run=False):
-    """Traite un fichier C/H"""
-    if not os.path.isfile(filepath):
-        print(f"[ERR] Not a file: {filepath}")
-        return
-
-    if verbose:
-        print(f"\n{'='*60}")
-        print(f"Processing: {filepath}")
-        print(f"{'='*60}")
-
-    with open(filepath, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    if verbose:
-        print("\n--- BEFORE ---")
-        print(content)
-
-    lines = content.splitlines(keepends=True)
-    new_lines = apply_fixers(lines)
-    new_content = "".join(new_lines)
-
-    if verbose:
-        print("\n--- AFTER ---")
-        print(new_content)
-        print(f"{'='*60}\n")
-
-    if not dry_run:
-        with open(filepath, "w", encoding="utf-8") as f:
-            f.write(new_content)
+    """
+    Traite un fichier C pour corriger les erreurs de norme
+    
+    Args:
+        filepath: Chemin du fichier à traiter
+        verbose: Afficher les modifications
+        dry_run: Ne pas sauvegarder les modifications
+    """
+    from normfixer.core.fixer import apply_all_fixes
+    
+    try:
+        # Lire le fichier
+        with open(filepath, 'r', encoding='utf-8') as f:
+            original_content = f.read()
+        
+        # Appliquer les corrections
+        lines = original_content.splitlines(keepends=True)
+        fixed_content = apply_all_fixes(lines)
+        
+        # Affichage si verbose
         if verbose:
-            print(f"✓ File saved: {filepath}")
-
-    return new_lines
+            print("=" * 60)
+            print(f"Processing: {filepath}")
+            print("=" * 60)
+            print("\n--- BEFORE ---")
+            print(original_content)
+            print("\n--- AFTER ---")
+            print(fixed_content)
+            print("\n" + "=" * 60)
+        
+        # Sauvegarder si pas dry-run
+        if not dry_run:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(fixed_content)
+            print(f"\n✓ File saved: {filepath}")
+        else:
+            print(f"\n✓ Dry-run complete (no changes saved)")
+            
+    except FileNotFoundError:
+        print(f"❌ Error: File not found: {filepath}")
+    except Exception as e:
+        print(f"❌ Error processing {filepath}: {e}")
+        raise
 
 
 def process_path(path, verbose=False, dry_run=False):
-    """Traite récursivement un dossier"""
-    if os.path.isfile(path):
-        return process_file(path, verbose=verbose, dry_run=dry_run)
+    """
+    Traite un fichier ou un dossier (récursivement)
+    
+    Args:
+        path: Chemin du fichier ou dossier
+        verbose: Afficher les modifications
+        dry_run: Ne pas sauvegarder les modifications
+    """
+    path_obj = Path(path)
+    
+    if path_obj.is_file():
+        if path_obj.suffix in ['.c', '.h']:
+            process_file(str(path_obj), verbose=verbose, dry_run=dry_run)
+        else:
+            print(f"⚠️  Skipping non-C file: {path}")
+    
+    elif path_obj.is_dir():
+        c_files = list(path_obj.rglob('*.c')) + list(path_obj.rglob('*.h'))
+        
+        if not c_files:
+            print(f"⚠️  No C files found in: {path}")
+            return
+        
+        print(f"📁 Found {len(c_files)} C file(s) in {path}")
+        for file in c_files:
+            process_file(str(file), verbose=verbose, dry_run=dry_run)
+    
+    else:
+        print(f"❌ Error: Path not found: {path}")
 
-    for root, _, files in os.walk(path):
-        for file in files:
-            if file.endswith((".c", ".h")):
-                process_file(
-                    os.path.join(root, file),
-                    verbose=verbose,
-                    dry_run=dry_run
-                )
+def process_file(filepath, verbose=False, dry_run=False):
+    """
+    Traite un fichier C pour corriger les erreurs de norme
+    
+    Args:
+        filepath: Chemin du fichier à traiter
+        verbose: Afficher les modifications
+        dry_run: Ne pas sauvegarder les modifications
+    """
+    from normfixer.core.fixer import apply_all_fixes
+    
+    try:
+        # Lire le fichier
+        with open(filepath, 'r', encoding='utf-8') as f:
+            original_content = f.read()
+        
+        # Appliquer les corrections
+        lines = original_content.splitlines(keepends=True)
+        fixed_content = apply_all_fixes(lines)
+        
+        # Affichage si verbose
+        if verbose:
+            print("=" * 60)
+            print(f"Processing: {filepath}")
+            print("=" * 60)
+            print("\n--- BEFORE ---")
+            print(original_content)
+            print("\n--- AFTER ---")
+            print(fixed_content)
+            print("\n" + "=" * 60)
+        
+        # Sauvegarder si pas dry-run
+        if not dry_run:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(fixed_content)
+            print(f"\n✓ File saved: {filepath}")
+        else:
+            print(f"\n✓ Dry-run complete (no changes saved)")
+            
+    except FileNotFoundError:
+        print(f"❌ Error: File not found: {filepath}")
+    except Exception as e:
+        print(f"❌ Error processing {filepath}: {e}")
+        raise
